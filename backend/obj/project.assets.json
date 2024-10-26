@@ -482,19 +482,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\user\\.nuget\\packages\\": {}
+    "C:\\Users\\Kimuthu Kisal\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Projects\\Esports-Project\\backend\\backend.csproj",
+      "projectUniqueName": "E:\\Projects\\ESport\\Esports-Project\\backend\\backend.csproj",
       "projectName": "backend",
-      "projectPath": "D:\\Projects\\Esports-Project\\backend\\backend.csproj",
-      "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-      "outputPath": "D:\\Projects\\Esports-Project\\backend\\obj\\",
+      "projectPath": "E:\\Projects\\ESport\\Esports-Project\\backend\\backend.csproj",
+      "packagesPath": "C:\\Users\\Kimuthu Kisal\\.nuget\\packages\\",
+      "outputPath": "E:\\Projects\\ESport\\Esports-Project\\backend\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Kimuthu Kisal\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
