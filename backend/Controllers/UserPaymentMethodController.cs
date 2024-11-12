@@ -4,8 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using backend.Data;
 using backend.Dtos.PaymentMethod;
+using backend.Interfaces;
 using backend.Mappers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Controllers
 {
@@ -14,89 +16,79 @@ namespace backend.Controllers
     public class UserPaymentMethodController : ControllerBase
     {
         private readonly ApplicationDBContext _context;
-        public UserPaymentMethodController(ApplicationDBContext context)
+        private readonly IPaymentMethodRepository _paymentMethodRepo;
+        public UserPaymentMethodController(ApplicationDBContext context, IPaymentMethodRepository paymentMethodRepo)
         {
+            _paymentMethodRepo = paymentMethodRepo;
             _context = context;
         }
 
         [HttpGet]
-        public IActionResult GetAllPaymentMethods()
+        public async Task<IActionResult> GetAllPaymentMethods()
         {
-            var allPaymentMethods = _context.UserPaymentMethods.ToList().Select(pm => pm.ToPaymentMethodDto());
-            return Ok(allPaymentMethods);
+            var allPaymentMethods = await _paymentMethodRepo.GetAllAsync();
+            var allPaymentMethodsDto = allPaymentMethods.Select(pm => pm.ToPaymentMethodDto());
+            return Ok(allPaymentMethodsDto);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetPaymentMethodById([FromRoute] int id)
+        public async Task<IActionResult> GetPaymentMethodById([FromRoute] int id)
         {
-            var paymentMethodDetails = _context.UserPaymentMethods.Find(id);
+            var paymentMethodDetails = await _paymentMethodRepo.GetByIdAsync(id);
             if (paymentMethodDetails == null)
             {
                 return NotFound();
             }
             else
             {
-                return Ok(paymentMethodDetails);
+                return Ok(paymentMethodDetails.ToPaymentMethodDto());
             }
         }
 
         [HttpGet("user/{userId}")]
-        public IActionResult GetPaymentMethodsByUserId([FromRoute] int userId)
+        public async Task<IActionResult> GetPaymentMethodsByUserId([FromRoute] int userId)
         {
-            var paymentMethods = _context.UserPaymentMethods.Where(pm => pm.UserId == userId).ToList();
+            var paymentMethods = await _paymentMethodRepo.GetAllByIdAsync(userId);
             if (!paymentMethods.Any())
             {
                 return NotFound();
             }
             else
             {
-                return Ok(paymentMethods);
+                return Ok(paymentMethods.Select(pm => pm.ToPaymentMethodDto()));
             }
         }
 
         [HttpPost]
-        public IActionResult CreatePaymentMethod([FromBody] CreatePaymentMethodDto paymentMethodDto)
+        public async Task<IActionResult> CreatePaymentMethod([FromBody] CreatePaymentMethodDto paymentMethodDto)
         {
             var paymentMethodModel = paymentMethodDto.ToUserPaymentMethodFromCreateDto();
-            _context.UserPaymentMethods.Add(paymentMethodModel);
-            _context.SaveChanges();
-            return CreatedAtAction(nameof(GetPaymentMethodById), new {id = paymentMethodModel.UserPaymentMethodId}, paymentMethodModel.ToPaymentMethodDto());
+            await _paymentMethodRepo.CreateAsync(paymentMethodModel);
+            return CreatedAtAction(nameof(GetPaymentMethodById), new { id = paymentMethodModel.UserPaymentMethodId }, paymentMethodModel.ToPaymentMethodDto());
         }
 
         [HttpPut]
         [Route("{id}")]
-        public IActionResult UpdatePaymentMethod([FromRoute] int id, [FromBody] UpdatePaymentMethodDto paymentMethodDto)
+        public async Task<IActionResult> UpdatePaymentMethod([FromRoute] int id, [FromBody] UpdatePaymentMethodDto paymentMethodDto)
         {
-            var paymentMethodModel = _context.UserPaymentMethods.FirstOrDefault(pm => pm.UserPaymentMethodId == id);
+            var paymentMethodModel = await _paymentMethodRepo.UpdateAsync(id, paymentMethodDto);
             if (paymentMethodModel == null)
             {
                 return NotFound();
-            }  
-            paymentMethodModel.CardNumber = paymentMethodDto.CardNumber;
-            paymentMethodModel.CardType = paymentMethodDto.CardType;
-            paymentMethodModel.BankName = paymentMethodDto.BankName;
-            paymentMethodModel.BranchName = paymentMethodDto.BranchName;
-            paymentMethodModel.BranchCode = paymentMethodDto.BranchCode;
-            paymentMethodModel.IssuedDate = paymentMethodDto.IssuedDate;
-            paymentMethodModel.ExpireDate = paymentMethodDto.ExpireDate;
-            paymentMethodModel.CardStatus = paymentMethodDto.CardStatus;
-            paymentMethodModel.CardVerified = paymentMethodDto.CardVerified;
-            _context.SaveChanges();
+            }
             return Ok(paymentMethodModel.ToPaymentMethodDto());
         }
 
         [HttpDelete]
         [Route("{id}")]
-        public IActionResult DeletePaymentMethod([FromRoute] int id)
+        public async Task<IActionResult> DeletePaymentMethod([FromRoute] int id)
         {
-            var paymentMethodModel = _context.UserPaymentMethods.FirstOrDefault(pm => pm.UserPaymentMethodId == id);
+            var paymentMethodModel = await _paymentMethodRepo.DeleteAsync(id);
             if (paymentMethodModel == null)
             {
                 return NotFound();
-            } 
-            _context.UserPaymentMethods.Remove(paymentMethodModel);
-            _context.SaveChanges();
-            return NoContent();
+            }
+            return NoContent(); 
         }
     }
 }
