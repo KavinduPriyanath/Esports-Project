@@ -12,7 +12,7 @@ namespace backend.Models
         public required string LastName { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public required string UserEmail { get; set; } = string.Empty;
-        public required string Nic { get; set; } 
+        public required string Nic { get; set; }
         public required DateOnly Dob { get; set; }
         public required string ContactNo { get; set; }
         public string Address { get; set; } = string.Empty;

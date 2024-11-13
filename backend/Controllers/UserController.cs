@@ -17,10 +17,12 @@ namespace backend.Controllers
     {
         private readonly ApplicationDBContext _context;
         private readonly IUserRepository _userRepo;
-        public UserController(ApplicationDBContext context, IUserRepository userRepo)
+        private readonly IPaymentMethodRepository _paymentMethodRepo;
+        public UserController(ApplicationDBContext context, IUserRepository userRepo, IPaymentMethodRepository paymentMethodRepo)
         {
             _userRepo = userRepo;
             _context = context;
+            _paymentMethodRepo = paymentMethodRepo;
         }
 
         [HttpGet]
@@ -42,6 +44,22 @@ namespace backend.Controllers
             else
             {
                 return Ok(user.ToUserDto());
+            }
+        }
+
+        [HttpGet("payment/{id}")]
+        public async Task<IActionResult> GetUserByIdWithPaymentMethods([FromRoute] int id)
+        {
+            var user = await _userRepo.GetByIdAsync(id);
+            var paymentMethods = await _paymentMethodRepo.GetAllByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                var userPaymentMethods = paymentMethods.Select(pm => pm.ToPaymentMethodDto()).ToList();
+                return Ok(user.ToUserWithPaymentDto(userPaymentMethods));
             }
         }
 

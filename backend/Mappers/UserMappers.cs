@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using backend.Dtos.PaymentMethod;
 using backend.Dtos.User;
 using backend.Models;
 
@@ -19,6 +20,20 @@ namespace backend.Mappers
                 UserEmail = user.UserEmail,
                 ProfileImage = user.ProfileImage,
                 UserAccountStatus = user.UserAccountStatus
+            };
+        }
+
+        public static UserWithPaymentDto ToUserWithPaymentDto(this User user, List<PaymentMethodDto> paymentMethods)
+        {
+            return new UserWithPaymentDto
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                UserName = user.UserName,
+                UserEmail = user.UserEmail,
+                ProfileImage = user.ProfileImage,
+                UserAccountStatus = user.UserAccountStatus,
+                PaymentMethods = paymentMethods    // Get payment methods here
             };
         }
 
