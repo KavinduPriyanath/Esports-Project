@@ -17,10 +17,12 @@ namespace backend.Controllers
     {
         private readonly ApplicationDBContext _context;
         private readonly IPaymentMethodRepository _paymentMethodRepo;
-        public UserPaymentMethodController(ApplicationDBContext context, IPaymentMethodRepository paymentMethodRepo)
+        private readonly IUserRepository _userRepo;
+        public UserPaymentMethodController(ApplicationDBContext context, IPaymentMethodRepository paymentMethodRepo, IUserRepository userRepo)
         {
             _paymentMethodRepo = paymentMethodRepo;
             _context = context;
+            _userRepo = userRepo;
         }
 
         [HttpGet]
@@ -31,7 +33,7 @@ namespace backend.Controllers
             return Ok(allPaymentMethodsDto);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetPaymentMethodById([FromRoute] int id)
         {
             var paymentMethodDetails = await _paymentMethodRepo.GetByIdAsync(id);
@@ -45,7 +47,7 @@ namespace backend.Controllers
             }
         }
 
-        [HttpGet("user/{userId}")]
+        [HttpGet("user/{userId:int}")]
         public async Task<IActionResult> GetPaymentMethodsByUserId([FromRoute] int userId)
         {
             var paymentMethods = await _paymentMethodRepo.GetAllByIdAsync(userId);
@@ -59,18 +61,30 @@ namespace backend.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreatePaymentMethod([FromBody] CreatePaymentMethodDto paymentMethodDto)
+        [HttpPost("{uid:int}")]
+        public async Task<IActionResult> CreatePaymentMethod([FromRoute] int uid, [FromBody] CreatePaymentMethodDto paymentMethodDto)
         {
-            var paymentMethodModel = paymentMethodDto.ToUserPaymentMethodFromCreateDto();
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            if (!await _userRepo.IsUserExist(uid))
+            {
+                return BadRequest("User does not exists");
+            }
+            var paymentMethodModel = paymentMethodDto.ToUserPaymentMethodFromCreateDto(uid);
             await _paymentMethodRepo.CreateAsync(paymentMethodModel);
             return CreatedAtAction(nameof(GetPaymentMethodById), new { id = paymentMethodModel.UserPaymentMethodId }, paymentMethodModel.ToPaymentMethodDto());
         }
 
         [HttpPut]
-        [Route("{id}")]
+        [Route("{id:int}")]
         public async Task<IActionResult> UpdatePaymentMethod([FromRoute] int id, [FromBody] UpdatePaymentMethodDto paymentMethodDto)
         {
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var paymentMethodModel = await _paymentMethodRepo.UpdateAsync(id, paymentMethodDto);
             if (paymentMethodModel == null)
             {
@@ -80,7 +94,7 @@ namespace backend.Controllers
         }
 
         [HttpDelete]
-        [Route("{id}")]
+        [Route("{id:int}")]
         public async Task<IActionResult> DeletePaymentMethod([FromRoute] int id)
         {
             var paymentMethodModel = await _paymentMethodRepo.DeleteAsync(id);
@@ -88,7 +102,7 @@ namespace backend.Controllers
             {
                 return NotFound();
             }
-            return NoContent(); 
+            return NoContent();
         }
     }
 }

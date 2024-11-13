@@ -68,5 +68,10 @@ namespace backend.Repository
             await _context.SaveChangesAsync();
             return userModel;
         }
+
+        public Task<bool> IsUserExist(int id)
+        {
+            return _context.Users.AnyAsync(u => u.UserId == id);
+        }
     }
 }

@@ -33,7 +33,7 @@ namespace backend.Controllers
             return Ok(allUsersDto);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetUserById([FromRoute] int id)
         {
             var user = await _userRepo.GetByIdAsync(id);
@@ -47,7 +47,7 @@ namespace backend.Controllers
             }
         }
 
-        [HttpGet("payment/{id}")]
+        [HttpGet("payment/{id:int}")]
         public async Task<IActionResult> GetUserByIdWithPaymentMethods([FromRoute] int id)
         {
             var user = await _userRepo.GetByIdAsync(id);
@@ -66,15 +66,23 @@ namespace backend.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserDto userDto)
         {
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var userModel = userDto.ToUserFromUserCreateDto();
             await _userRepo.CreateAsync(userModel);
             return CreatedAtAction(nameof(GetUserById), new { id = userModel.UserId }, userModel.ToUserDto());
         }
 
         [HttpPut]
-        [Route("{id}")]
+        [Route("{id:int}")]
         public async Task<IActionResult> UpdateUser([FromRoute] int id, [FromBody] UpdateUserDto userDto)
         {
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var userModel = await _userRepo.UpdateAsync(id, userDto);
             if (userModel == null)
             {
@@ -84,7 +92,7 @@ namespace backend.Controllers
         }
 
         [HttpDelete]
-        [Route("{id}")]
+        [Route("{id:int}")]
         public async Task<IActionResult> DeleteUser([FromRoute] int id)
         {
             var userModel = await _userRepo.DeleteAsync(id);

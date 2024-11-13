@@ -21,7 +21,7 @@ namespace backend.Mappers
             };
         }
 
-        public static UserPaymentMethod ToUserPaymentMethodFromCreateDto(this CreatePaymentMethodDto paymentMethodDto)
+        public static UserPaymentMethod ToUserPaymentMethodFromCreateDto(this CreatePaymentMethodDto paymentMethodDto, int uid)
         {
             return new UserPaymentMethod 
             {
@@ -34,7 +34,7 @@ namespace backend.Mappers
                 ExpireDate = paymentMethodDto.ExpireDate,
                 CardStatus = paymentMethodDto.CardStatus,
                 CardVerified = paymentMethodDto.CardVerified,
-                UserId = paymentMethodDto.UserId
+                UserId = uid
             };
         }
     }
