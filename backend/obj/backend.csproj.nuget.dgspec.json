@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Projects\\Esports-Project\\backend\\backend.csproj": {}
+    "E:\\Projects\\ESport\\Esports-Project\\backend\\backend.csproj": {}
   },
   "projects": {
-    "D:\\Projects\\Esports-Project\\backend\\backend.csproj": {
+    "E:\\Projects\\ESport\\Esports-Project\\backend\\backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Projects\\Esports-Project\\backend\\backend.csproj",
+        "projectUniqueName": "E:\\Projects\\ESport\\Esports-Project\\backend\\backend.csproj",
         "projectName": "backend",
-        "projectPath": "D:\\Projects\\Esports-Project\\backend\\backend.csproj",
-        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-        "outputPath": "D:\\Projects\\Esports-Project\\backend\\obj\\",
+        "projectPath": "E:\\Projects\\ESport\\Esports-Project\\backend\\backend.csproj",
+        "packagesPath": "C:\\Users\\Kimuthu Kisal\\.nuget\\packages\\",
+        "outputPath": "E:\\Projects\\ESport\\Esports-Project\\backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Kimuthu Kisal\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -47,6 +47,22 @@
           "targetAlias": "net8.0",
           "dependencies": {
             "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[8.0.10, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.10, )"
+            },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[8.0.10, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
               "target": "Package",
               "version": "[8.0.10, )"
             },
