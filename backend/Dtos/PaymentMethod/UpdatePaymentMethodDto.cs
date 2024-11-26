@@ -10,6 +10,7 @@ namespace backend.Dtos.PaymentMethod
     {
         // [Required]
         // [Length(16, 16, ErrorMessage = "Card Number should contain 16 digits")]
+        public int UserPaymentMethodId { get; set; }
         public required int CardNumber { get; set; }
         public required string CardType { get; set; } // Credit, Debit
         public required string BankName { get; set; }

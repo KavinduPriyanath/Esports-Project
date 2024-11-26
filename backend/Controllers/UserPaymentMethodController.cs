@@ -64,7 +64,7 @@ namespace backend.Controllers
         [HttpPost("{uid:int}")]
         public async Task<IActionResult> CreatePaymentMethod([FromRoute] int uid, [FromBody] CreatePaymentMethodDto paymentMethodDto)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
@@ -81,7 +81,7 @@ namespace backend.Controllers
         [Route("{id:int}")]
         public async Task<IActionResult> UpdatePaymentMethod([FromRoute] int id, [FromBody] UpdatePaymentMethodDto paymentMethodDto)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }

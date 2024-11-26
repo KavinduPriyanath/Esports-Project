@@ -58,6 +58,7 @@ namespace backend.Repository
             {
                 return null;
             }
+            paymentMethodModel.UserPaymentMethodId = paymentMethodDto.UserPaymentMethodId;
             paymentMethodModel.CardNumber = paymentMethodDto.CardNumber;
             paymentMethodModel.CardType = paymentMethodDto.CardType;
             paymentMethodModel.BankName = paymentMethodDto.BankName;

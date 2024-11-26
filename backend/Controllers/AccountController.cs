@@ -83,18 +83,18 @@ namespace backend.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.UserName == loginDto.UserName.ToLower());
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.UserName.ToLower() == loginDto.UserName.ToLower());
 
             if (user == null)
             {
                 return Unauthorized("Invalid Username");
             }
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false); 
+            var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
 
             if (!result.Succeeded)
             {
-                return Unauthorized("Username not found of Password incorrect");
+                return Unauthorized("Username not found or Password incorrect");
             }
             return Ok(
                 new NewUserDto

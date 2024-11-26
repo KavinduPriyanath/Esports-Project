@@ -54,6 +54,7 @@ namespace backend.Repository
             {
                 return null;
             }
+            userModel.UserId = userDto.UserId;
             userModel.FirstName = userDto.FirstName;
             userModel.LastName = userDto.LastName;
             userModel.UserName = userDto.UserName;

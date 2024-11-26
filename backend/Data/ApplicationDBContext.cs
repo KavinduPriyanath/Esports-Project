@@ -14,11 +14,12 @@ namespace backend.Data
     {
         public ApplicationDBContext(DbContextOptions dbContextOptions) : base(dbContextOptions)
         {
-            
+
         }
 
         public DbSet<User> Users { get; set; }
         public DbSet<UserPaymentMethod> UserPaymentMethods { get; set; }
+        public DbSet<Organization> Organizations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
