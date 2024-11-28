@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using backend.Data;
 using backend.Dtos.User;
 using backend.Interfaces;
 using backend.Mappers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +15,7 @@ namespace backend.Controllers
 {
     [Route("backend/user")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly ApplicationDBContext _context;
@@ -23,6 +26,11 @@ namespace backend.Controllers
             _userRepo = userRepo;
             _context = context;
             _paymentMethodRepo = paymentMethodRepo;
+        }
+
+        private string GetCurrentUserEmail()
+        {
+            return User.FindFirstValue(ClaimTypes.Email); // Assuming the ID is stored in this claim
         }
 
         [HttpGet]
@@ -63,10 +71,11 @@ namespace backend.Controllers
             }
         }
 
+        // User Creation is done when registration. This function may be not useful.
         [HttpPost]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserDto userDto)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
@@ -76,14 +85,28 @@ namespace backend.Controllers
         }
 
         [HttpPut]
-        [Route("{id:int}")]
-        public async Task<IActionResult> UpdateUser([FromRoute] int id, [FromBody] UpdateUserDto userDto)
+        // [Route("{id:int}")]
+        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserDto userDto)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var userModel = await _userRepo.UpdateAsync(id, userDto);
+            var currUserEmail = GetCurrentUserEmail();
+            if (string.IsNullOrEmpty(currUserEmail))
+            {
+                return Unauthorized($"User not found {currUserEmail}");
+            }
+            var currUser = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == currUserEmail);
+            if (currUser == null)
+            {
+                return NotFound($"User details not found {currUserEmail}");
+            }
+            if (currUser.UserId != userDto.UserId)
+            {
+                return Unauthorized($"User does not match {currUserEmail}");
+            }
+            var userModel = await _userRepo.UpdateAsync(currUser.UserId, userDto);
             if (userModel == null)
             {
                 return NotFound();
@@ -92,10 +115,20 @@ namespace backend.Controllers
         }
 
         [HttpDelete]
-        [Route("{id:int}")]
-        public async Task<IActionResult> DeleteUser([FromRoute] int id)
+        // [Route("{id:int}")]
+        public async Task<IActionResult> DeleteUser()
         {
-            var userModel = await _userRepo.DeleteAsync(id);
+            var currUserEmail = GetCurrentUserEmail();
+            if (string.IsNullOrEmpty(currUserEmail))
+            {
+                return Unauthorized($"User not found {currUserEmail}");
+            }
+            var currUser = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == currUserEmail);
+            if (currUser == null)
+            {
+                return NotFound($"User details not found {currUserEmail}");
+            }
+            var userModel = await _userRepo.DeleteAsync(currUser.UserId);
             if (userModel == null)
             {
                 return NotFound();

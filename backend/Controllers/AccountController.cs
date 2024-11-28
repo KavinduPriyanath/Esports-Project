@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using backend.Dtos.Account;
+using backend.Dtos.User;
 using backend.Interfaces;
+using backend.Mappers;
 using backend.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,12 +20,14 @@ namespace backend.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly ITokenService _tokenService;
         private readonly SignInManager<AppUser> _signInManager;
+        private readonly IUserRepository _userRepo;
 
-        public AccountController(UserManager<AppUser> userManager, ITokenService tokenService, SignInManager<AppUser> signInManager)
+        public AccountController(UserManager<AppUser> userManager, ITokenService tokenService, SignInManager<AppUser> signInManager, IUserRepository userRepo)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _signInManager = signInManager;
+            _userRepo = userRepo;
         }
 
         [HttpPost("register")]
@@ -49,6 +53,20 @@ namespace backend.Controllers
                     var roleResult = await _userManager.AddToRoleAsync(appUser, "User");
                     if (roleResult.Succeeded)
                     {
+                        var userDto = new CreateUserDto {
+                            FirstName = registerDto.FirstName,
+                            LastName = registerDto.LastName,
+                            UserName = registerDto.UserName,
+                            UserEmail = registerDto.Email,
+                            Nic = registerDto.Nic,
+                            Dob = registerDto.Dob,
+                            ContactNo = registerDto.ContactNo,
+                            Address = registerDto.Address,
+                            ProfileImage = registerDto.ProfileImage,
+                            WorkingStatus = registerDto.WorkingStatus
+                        };
+                        var userModel = userDto.ToUserFromUserCreateDto();
+                        await _userRepo.CreateAsync(userModel);
                         return Ok(
                             new NewUserDto
                             {
@@ -70,7 +88,6 @@ namespace backend.Controllers
             }
             catch (Exception ex)
             {
-                // return StatusCode(500, "try block failed");
                 return StatusCode(500, ex);
             }
         }

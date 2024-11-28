@@ -7,6 +7,8 @@ using backend.Dtos.Organization;
 using backend.Dtos.User;
 using backend.Interfaces;
 using backend.Mappers;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +16,7 @@ namespace backend.Controllers
 {
     [Route("backend/organization")]
     [ApiController]
+    [Authorize]
     public class OrganizationController : ControllerBase
     {
         private readonly ApplicationDBContext _context;
@@ -25,6 +28,27 @@ namespace backend.Controllers
             _context = context;
             _userRepo = userRepo;
             _organizationRepo = organizationRepository;
+        }
+
+        private string GetCurrentUserEmail()
+        {
+            return User.FindFirstValue(ClaimTypes.Email);
+        }
+
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUserDetails()
+        {
+            var userEmail = GetCurrentUserEmail();
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                return Unauthorized($"User not found {userEmail}");
+            }
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == userEmail);
+            if (user == null)
+            {
+                return NotFound($"User details not found {userEmail}");
+            }
+            return Ok(user);
         }
 
         [HttpGet]
@@ -49,19 +73,40 @@ namespace backend.Controllers
             }
         }
 
-        [HttpPost("{uid:int}")]
-        public async Task<IActionResult> CreateOrganization([FromRoute] int uid, [FromBody] CreateOrganizationDto organizationDto)
+        // [HttpPost("{uid:int}")]
+        // public async Task<IActionResult> CreateOrganization([FromRoute] int uid, [FromBody] CreateOrganizationDto organizationDto)
+        // {
+        //     if (!ModelState.IsValid)
+        //     {
+        //         return BadRequest(ModelState);
+        //     }
+        //     if (!await _userRepo.IsUserExist(uid))
+        //     {
+        //         return BadRequest("User does not exists");
+        //     }
+        //     var organizationModel = organizationDto.ToUserOrganizationFromCreateDto(uid);
+        //     await _organizationRepo.CreateAsync(uid, organizationModel);
+        //     return CreatedAtAction(nameof(GetOrganizationById), new { id = organizationModel.OrganizationId }, organizationModel.ToOrganizationDto());
+        // }
+        [HttpPost]
+        public async Task<IActionResult> CreateOrganization([FromBody] CreateOrganizationDto organizationDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            if (!await _userRepo.IsUserExist(uid))
+            var currUserEmail = GetCurrentUserEmail();
+            if (string.IsNullOrEmpty(currUserEmail))
             {
-                return BadRequest("User does not exists");
+                return Unauthorized($"User not found {currUserEmail}");
             }
-            var organizationModel = organizationDto.ToUserOrganizationFromCreateDto(uid);
-            await _organizationRepo.CreateAsync(uid, organizationModel);
+            var currUser = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == currUserEmail);
+            if (currUser == null)
+            {
+                return NotFound($"User details not found {currUserEmail}");
+            }
+            var organizationModel = organizationDto.ToUserOrganizationFromCreateDto(currUser.UserId);
+            await _organizationRepo.CreateAsync(currUser.UserId, organizationModel);
             return CreatedAtAction(nameof(GetOrganizationById), new { id = organizationModel.OrganizationId }, organizationModel.ToOrganizationDto());
         }
 
