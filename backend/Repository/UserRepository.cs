@@ -18,6 +18,14 @@ namespace backend.Repository
             _context = context;
         }
 
+        public enum UserAccountStatus
+        {
+            Active = 1,
+            Inactive = 0,
+            Deleted = -1,
+            Suspended = -2
+        }
+
         public async Task<List<User>> GetAllAsync()
         {
             return await _context.Users.ToListAsync();
@@ -37,14 +45,50 @@ namespace backend.Repository
 
         public async Task<User?> DeleteAsync(int id)
         {
-            var user = _context.Users.FirstOrDefault(pm => pm.UserId == id);
-            if (user == null)
+            var userModel = await _context.Users.FirstOrDefaultAsync(pm => pm.UserId == id);
+            if (userModel == null)
             {
                 return null;
             }
-            _context.Users.Remove(user);
+            userModel.UserAccountStatus = (int)UserAccountStatus.Deleted;
             await _context.SaveChangesAsync();
-            return user;
+            return userModel;
+        }
+
+        public async Task<User?> DeactiveAsync(int id)
+        {
+            var userModel = await _context.Users.FirstOrDefaultAsync(pm => pm.UserId == id);
+            if (userModel == null)
+            {
+                return null;
+            }
+            userModel.UserAccountStatus = (int)UserAccountStatus.Inactive;
+            await _context.SaveChangesAsync();
+            return userModel;
+        }
+
+        public async Task<User?> SuspendAsync(int id)
+        {
+            var userModel = await _context.Users.FirstOrDefaultAsync(pm => pm.UserId == id);
+            if (userModel == null)
+            {
+                return null;
+            }
+            userModel.UserAccountStatus = (int)UserAccountStatus.Suspended;
+            await _context.SaveChangesAsync();
+            return userModel;
+        }
+
+        public async Task<User?> ReactivateAsync(int id)
+        {
+            var userModel = await _context.Users.FirstOrDefaultAsync(pm => pm.UserId == id);
+            if (userModel == null)
+            {
+                return null;
+            }
+            userModel.UserAccountStatus = (int)UserAccountStatus.Active;
+            await _context.SaveChangesAsync();
+            return userModel;
         }
 
         public async Task<User?> UpdateAsync(int id, UpdateUserDto userDto)

@@ -17,6 +17,15 @@ namespace backend.Repository
         {
             _context = context;
         }
+
+        public enum PaymentStatus
+        {
+            Active = 1,
+            Inactive = 0,
+            Deleted = -1,
+            Suspended = -2
+        }
+
         public async Task<List<UserPaymentMethod>> GetAllAsync()
         {
             return await _context.UserPaymentMethods.ToListAsync();
@@ -41,12 +50,12 @@ namespace backend.Repository
 
         public async Task<UserPaymentMethod?> DeleteAsync(int id)
         {
-            var paymentMethodModel = _context.UserPaymentMethods.FirstOrDefault(pm => pm.UserPaymentMethodId == id);
+            var paymentMethodModel = await _context.UserPaymentMethods.FirstOrDefaultAsync(pm => pm.UserPaymentMethodId == id);
             if (paymentMethodModel == null)
             {
                 return null;
             }
-            _context.UserPaymentMethods.Remove(paymentMethodModel);
+            paymentMethodModel.CardStatus = (int)PaymentStatus.Deleted;
             await _context.SaveChangesAsync();
             return paymentMethodModel;
         }

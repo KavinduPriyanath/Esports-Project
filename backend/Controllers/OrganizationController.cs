@@ -35,22 +35,6 @@ namespace backend.Controllers
             return User.FindFirstValue(ClaimTypes.Email);
         }
 
-        [HttpGet("me")]
-        public async Task<IActionResult> GetCurrentUserDetails()
-        {
-            var userEmail = GetCurrentUserEmail();
-            if (string.IsNullOrEmpty(userEmail))
-            {
-                return Unauthorized($"User not found {userEmail}");
-            }
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == userEmail);
-            if (user == null)
-            {
-                return NotFound($"User details not found {userEmail}");
-            }
-            return Ok(user);
-        }
-
         [HttpGet]
         public async Task<IActionResult> GetAllOrganizations()
         {
@@ -118,24 +102,56 @@ namespace backend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var organizationMethodModel = await _organizationRepo.UpdateAsync(id, updateOrganizationDto);
-            if (organizationMethodModel == null)
+            var currUserEmail = GetCurrentUserEmail();
+            if (string.IsNullOrEmpty(currUserEmail))
             {
-                return NotFound();
+                return Unauthorized($"User not found {currUserEmail}");
             }
-            return Ok(organizationMethodModel.ToOrganizationDto());
+            var currUser = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == currUserEmail);
+            var organizationDetails = await _organizationRepo.GetByIdAsync(id);
+            if (currUser.UserId == organizationDetails.Owner || currUser.UserId == organizationDetails.Admin1 || currUser.UserId == organizationDetails.Admin2 || currUser.UserId == organizationDetails.Admin3)
+            {
+                var organizationMethodModel = await _organizationRepo.UpdateAsync(id, updateOrganizationDto);
+                if (organizationMethodModel == null)
+                {
+                    return NotFound();
+                }
+                return Ok(organizationMethodModel.ToOrganizationDto());
+            }
+            else
+            {
+                return Unauthorized("User is not authorized to update organization details");
+            }
         }
 
         [HttpDelete]
         [Route("{id:int}")]
         public async Task<IActionResult> DeleteOrganizationMethod([FromRoute] int id)
         {
-            var organizationModel = await _organizationRepo.DeleteAsync(id);
-            if (organizationModel == null)
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                return BadRequest(ModelState);
             }
-            return NoContent();
+            var currUserEmail = GetCurrentUserEmail();
+            if (string.IsNullOrEmpty(currUserEmail))
+            {
+                return Unauthorized($"User not found {currUserEmail}");
+            }
+            var currUser = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == currUserEmail);
+            var organizationDetails = await _organizationRepo.GetByIdAsync(id);
+            if (currUser.UserId == organizationDetails.Owner || currUser.UserId == organizationDetails.Admin1 || currUser.UserId == organizationDetails.Admin2 || currUser.UserId == organizationDetails.Admin3)
+            {
+                var organizationModel = await _organizationRepo.DeleteAsync(id);
+                if (organizationModel == null)
+                {
+                    return NotFound();
+                }
+                return NoContent();
+            }
+            else
+            {
+                return Unauthorized("User is not authorized to delete organization");
+            }
         }
     }
 }

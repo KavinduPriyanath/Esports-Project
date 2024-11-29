@@ -20,6 +20,7 @@ namespace backend.Data
         public DbSet<User> Users { get; set; }
         public DbSet<UserPaymentMethod> UserPaymentMethods { get; set; }
         public DbSet<Organization> Organizations { get; set; }
+        public DbSet<Game> Games { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

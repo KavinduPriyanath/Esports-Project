@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using backend.Data;
 using backend.Dtos.Account;
 using backend.Dtos.User;
 using backend.Interfaces;
@@ -21,13 +23,36 @@ namespace backend.Controllers
         private readonly ITokenService _tokenService;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly IUserRepository _userRepo;
+        private readonly ApplicationDBContext _context;
 
-        public AccountController(UserManager<AppUser> userManager, ITokenService tokenService, SignInManager<AppUser> signInManager, IUserRepository userRepo)
+        public AccountController(UserManager<AppUser> userManager, ITokenService tokenService, SignInManager<AppUser> signInManager, IUserRepository userRepo, ApplicationDBContext context)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _signInManager = signInManager;
             _userRepo = userRepo;
+            _context = context;
+        }
+
+        private string GetCurrentUserEmail()
+        {
+            return User.FindFirstValue(ClaimTypes.Email);
+        }
+
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUserDetails()
+        {
+            var userEmail = GetCurrentUserEmail();
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                return Unauthorized($"User not found {userEmail}");
+            }
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == userEmail);
+            if (user == null)
+            {
+                return NotFound($"User details not found {userEmail}");
+            }
+            return Ok(user);
         }
 
         [HttpPost("register")]
@@ -53,7 +78,8 @@ namespace backend.Controllers
                     var roleResult = await _userManager.AddToRoleAsync(appUser, "User");
                     if (roleResult.Succeeded)
                     {
-                        var userDto = new CreateUserDto {
+                        var userDto = new CreateUserDto
+                        {
                             FirstName = registerDto.FirstName,
                             LastName = registerDto.LastName,
                             UserName = registerDto.UserName,

@@ -18,6 +18,14 @@ namespace backend.Repository
             _context = context;
         }
 
+        public enum OrganizationStatus
+        {
+            Active = 1,
+            Inactive = 0,
+            Deleted = -1,
+            Suspended = -2
+        }
+
         public async Task<List<Organization>> GetAllAsync()
         {
             return await _context.Organizations.ToListAsync();
@@ -42,12 +50,48 @@ namespace backend.Repository
 
         public async Task<Organization?> DeleteAsync(int id)
         {
-            var organizationModel = _context.Organizations.FirstOrDefault(o => o.OrganizationId == id);
+            var organizationModel = await  _context.Organizations.FirstOrDefaultAsync(o => o.OrganizationId == id);
             if (organizationModel == null)
             {
                 return null;
             }
-            _context.Organizations.Remove(organizationModel);
+            organizationModel.OrganizationStatus = (int)OrganizationStatus.Deleted;
+            await _context.SaveChangesAsync();
+            return organizationModel;
+        }
+
+        public async Task<Organization?> DeactiveAsync(int id)
+        {
+            var organizationModel = await _context.Organizations.FirstOrDefaultAsync(o => o.OrganizationId == id);
+            if (organizationModel == null)
+            {
+                return null;
+            }
+            organizationModel.OrganizationStatus = (int)OrganizationStatus.Inactive;
+            await _context.SaveChangesAsync();
+            return organizationModel;
+        }
+
+        public async Task<Organization?> SuspendAsync(int id)
+        {
+            var organizationModel = await _context.Organizations.FirstOrDefaultAsync(o => o.OrganizationId == id);
+            if (organizationModel == null)
+            {
+                return null;
+            }
+            organizationModel.OrganizationStatus = (int)OrganizationStatus.Suspended;
+            await _context.SaveChangesAsync();
+            return organizationModel;
+        }
+
+        public async Task<Organization?> ReactivateAsync(int id)
+        {
+            var organizationModel = await _context.Organizations.FirstOrDefaultAsync(o => o.OrganizationId == id);
+            if (organizationModel == null)
+            {
+                return null;
+            }
+            organizationModel.OrganizationStatus = (int)OrganizationStatus.Active;
             await _context.SaveChangesAsync();
             return organizationModel;
         }

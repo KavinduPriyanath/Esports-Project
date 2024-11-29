@@ -15,5 +15,8 @@ namespace backend.Interfaces
         Task<Organization> CreateAsync(int id, Organization organization);
         Task<Organization> UpdateAsync(int id, UpdateOrganizationDto updateOrganizationDto);
         Task<Organization> DeleteAsync(int id);
+        Task<Organization> DeactiveAsync(int id);
+        Task<Organization> SuspendAsync(int id);
+        Task<Organization> ReactivateAsync(int id);
     }
 }
