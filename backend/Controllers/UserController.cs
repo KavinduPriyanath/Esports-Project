@@ -31,6 +31,7 @@ namespace backend.Controllers
             _userHelper = userHelper;
         }
 
+        // Get all users
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -39,6 +40,7 @@ namespace backend.Controllers
             return Ok(allUsersDto);
         }
 
+        // Get selected user
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetUserById([FromRoute] int id)
         {
@@ -53,6 +55,7 @@ namespace backend.Controllers
             }
         }
 
+        // Get details of selected user with payment methods
         [HttpGet("payment/{id:int}")]
         public async Task<IActionResult> GetUserByIdWithPaymentMethods([FromRoute] int id)
         {
@@ -82,6 +85,7 @@ namespace backend.Controllers
             return CreatedAtAction(nameof(GetUserById), new { id = userModel.UserId }, userModel.ToUserDto());
         }
 
+        // Update user - the user is allowed to update his own account only.
         [HttpPut]
         // [Route("{id:int}")]
         public async Task<IActionResult> UpdateUser([FromBody] UpdateUserDto userDto)
@@ -107,6 +111,7 @@ namespace backend.Controllers
             return Ok(userModel.ToUserDto());
         }
 
+        // Delete account - state will be changes. record will be not deleted permenently.
         [HttpDelete]
         // [Route("{id:int}")]
         public async Task<IActionResult> DeleteUser()

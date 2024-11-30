@@ -55,6 +55,7 @@ namespace backend.Controllers
             return Ok(user);
         }
 
+        // New user profile is created while registering
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
@@ -118,6 +119,7 @@ namespace backend.Controllers
             }
         }
 
+        // Token should be authenticated manually in swagger after login process
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {

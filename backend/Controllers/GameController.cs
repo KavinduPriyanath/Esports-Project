@@ -11,6 +11,7 @@ using backend.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using backend.Helpers;
 
 namespace backend.Controllers
 {
@@ -22,19 +23,17 @@ namespace backend.Controllers
         private readonly ApplicationDBContext _context;
         private readonly IUserRepository _userRepo;
         private readonly IGameRepository _gameRepo;
+        private readonly UserHelper _userHelper;
 
-        public GameController(ApplicationDBContext context, IUserRepository userRepo, IGameRepository gameRepo)
+        public GameController(ApplicationDBContext context, IUserRepository userRepo, IGameRepository gameRepo, UserHelper userHelper)
         {
             _userRepo = userRepo;
             _context = context;
             _gameRepo = gameRepo;
+            _userHelper = userHelper;
         }
 
-        private string GetCurrentUserEmail()
-        {
-            return User.FindFirstValue(ClaimTypes.Email); // Assuming the ID is stored in this claim
-        }
-
+        // Get all games
         [HttpGet]
         public async Task<IActionResult> GetAllGames()
         {
@@ -43,6 +42,7 @@ namespace backend.Controllers
             return Ok(allGamesDto);
         }
 
+        // Get details of the selected game
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetGameById([FromRoute] int id)
         {
@@ -57,6 +57,7 @@ namespace backend.Controllers
             }
         }
 
+        // Create a new game
         [HttpPost]
         public async Task<IActionResult> CreateGame([FromBody] CreateGameDto createGameDto)
         {
@@ -69,6 +70,7 @@ namespace backend.Controllers
             return CreatedAtAction(nameof(GetGameById), new { id = gameModel.GameId }, gameModel.ToGameDto());
         }
 
+        // Update a game
         [HttpPut]
         [Route("{id:int}")]
         public async Task<IActionResult> UpdateGame([FromRoute] int id, [FromBody] UpdateGameDto updateGameDto)
@@ -77,13 +79,12 @@ namespace backend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var currUserEmail = GetCurrentUserEmail();
-            if (string.IsNullOrEmpty(currUserEmail))
+            var currUserId = await _userHelper.GetCurrentUserIdAsync(HttpContext);
+            if (currUserId == null)
             {
-                return Unauthorized($"User not found {currUserEmail}");
+                return Unauthorized("User not found.");
             }
-            var currUser = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == currUserEmail);
-            // Only Site Admins Can change game details? Normal users are not allowed. Define an attribute for usermodel to state the admin privilleges or some other technique.
+            // Only Sys Admins Can change game details? Normal users are not allowed. Define an attribute for usermodel to state the admin privilleges or some other technique.
             var gameDetails = await _gameRepo.GetByIdAsync(id);
             // if (currUser.UserId == organizationDetails.Owner || currUser.UserId == organizationDetails.Admin1 || currUser.UserId == organizationDetails.Admin2 || currUser.UserId == organizationDetails.Admin3)
             // {
@@ -100,6 +101,7 @@ namespace backend.Controllers
             // }
         }
 
+        // Delete a game - Only game status is changed. Notv permenently deleted.
         [HttpDelete]
         [Route("{id:int}")]
         public async Task<IActionResult> DeleteGame([FromRoute] int id)
@@ -108,27 +110,19 @@ namespace backend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var currUserEmail = GetCurrentUserEmail();
-            if (string.IsNullOrEmpty(currUserEmail))
+            var currUserId = await _userHelper.GetCurrentUserIdAsync(HttpContext);
+            if (currUserId == null)
             {
-                return Unauthorized($"User not found {currUserEmail}");
+                return Unauthorized("User not found.");
             }
-            var currUser = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == currUserEmail);
             // Only Site Admins Can change game details? Normal users are not allowed. Define an attribute for usermodel to state the admin privilleges or some other technique.
             var gameDetails = await _gameRepo.GetByIdAsync(id);
-            // if (currUser.UserId == organizationDetails.Owner || currUser.UserId == organizationDetails.Admin1 || currUser.UserId == organizationDetails.Admin2 || currUser.UserId == organizationDetails.Admin3)
-            // {
             var gameModel = await _gameRepo.DeleteAsync(id);
             if (gameModel == null)
             {
                 return NotFound();
             }
             return Ok(gameModel.ToGameDto());
-            // }
-            // else
-            // {
-            //     return Unauthorized("User is not authorized to update organization details");
-            // }
         }
     }
 

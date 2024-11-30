@@ -31,6 +31,7 @@ namespace backend.Controllers
             _userHelper = userHelper;
         }
 
+        // Get all payment methods
         [HttpGet]
         public async Task<IActionResult> GetAllPaymentMethods()
         {
@@ -39,6 +40,7 @@ namespace backend.Controllers
             return Ok(allPaymentMethodsDto);
         }
 
+        // Get selectedpayment method details
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetPaymentMethodById([FromRoute] int id)
         {
@@ -53,6 +55,7 @@ namespace backend.Controllers
             }
         }
 
+        // Get all payment methods of selected user
         [HttpGet("user/{userId:int}")]
         public async Task<IActionResult> GetPaymentMethodsByUserId([FromRoute] int userId)
         {
@@ -82,6 +85,8 @@ namespace backend.Controllers
         //     await _paymentMethodRepo.CreateAsync(paymentMethodModel);
         //     return CreatedAtAction(nameof(GetPaymentMethodById), new { id = paymentMethodModel.UserPaymentMethodId }, paymentMethodModel.ToPaymentMethodDto());
         // }
+
+        // Create a new payment method - user is only allowed to create payment methods for himself
         [HttpPost]
         public async Task<IActionResult> CreatePaymentMethod([FromBody] CreatePaymentMethodDto paymentMethodDto)
         {
@@ -99,6 +104,7 @@ namespace backend.Controllers
             return CreatedAtAction(nameof(GetPaymentMethodById), new { id = paymentMethodModel.UserPaymentMethodId }, paymentMethodModel.ToPaymentMethodDto());
         }
 
+        // Update payment method - user is only allowed to update payment methods of himself
         [HttpPut]
         [Route("{id:int}")]
         public async Task<IActionResult> UpdatePaymentMethod([FromRoute] int id, [FromBody] UpdatePaymentMethodDto paymentMethodDto)
@@ -125,6 +131,7 @@ namespace backend.Controllers
             return Ok(paymentMethodModel.ToPaymentMethodDto());
         }
 
+        // Update payment method - user is only allowed to delete payment methods of himself. State will be changed. Record will not be deleted permenently. 
         [HttpDelete]
         [Route("{id:int}")]
         public async Task<IActionResult> DeletePaymentMethod([FromRoute] int id)
