@@ -10,6 +10,7 @@ using backend.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using backend.Helpers;
 
 namespace backend.Controllers
 {
@@ -21,16 +22,13 @@ namespace backend.Controllers
         private readonly ApplicationDBContext _context;
         private readonly IPaymentMethodRepository _paymentMethodRepo;
         private readonly IUserRepository _userRepo;
-        public UserPaymentMethodController(ApplicationDBContext context, IPaymentMethodRepository paymentMethodRepo, IUserRepository userRepo)
+        private readonly UserHelper _userHelper;
+        public UserPaymentMethodController(ApplicationDBContext context, IPaymentMethodRepository paymentMethodRepo, IUserRepository userRepo, UserHelper userHelper)
         {
             _paymentMethodRepo = paymentMethodRepo;
             _context = context;
             _userRepo = userRepo;
-        }
-
-        private string GetCurrentUserEmail()
-        {
-            return User.FindFirstValue(ClaimTypes.Email); // Assuming the ID is stored in this claim
+            _userHelper = userHelper;
         }
 
         [HttpGet]
@@ -91,17 +89,12 @@ namespace backend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var currUserEmail = GetCurrentUserEmail();
-            if (string.IsNullOrEmpty(currUserEmail))
+            var currUserId = await _userHelper.GetCurrentUserIdAsync(HttpContext);
+            if (currUserId == null)
             {
-                return Unauthorized($"User not found {currUserEmail}");
+                return Unauthorized("User not found.");
             }
-            var currUser = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == currUserEmail);
-            if (currUser == null)
-            {
-                return NotFound($"User details not found {currUserEmail}");
-            }
-            var paymentMethodModel = paymentMethodDto.ToUserPaymentMethodFromCreateDto(currUser.UserId);
+            var paymentMethodModel = paymentMethodDto.ToUserPaymentMethodFromCreateDto(currUserId.Value);
             await _paymentMethodRepo.CreateAsync(paymentMethodModel);
             return CreatedAtAction(nameof(GetPaymentMethodById), new { id = paymentMethodModel.UserPaymentMethodId }, paymentMethodModel.ToPaymentMethodDto());
         }
@@ -114,18 +107,13 @@ namespace backend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var currUserEmail = GetCurrentUserEmail();
-            if (string.IsNullOrEmpty(currUserEmail))
+            var currUserId = await _userHelper.GetCurrentUserIdAsync(HttpContext);
+            if (currUserId == null)
             {
-                return Unauthorized($"User not found {currUserEmail}");
-            }
-            var currUser = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == currUserEmail);
-            if (currUser == null)
-            {
-                return NotFound($"User details not found {currUserEmail}");
+                return Unauthorized("User not found.");
             }
             var updatingPaymentMethodModel = await _context.UserPaymentMethods.FirstOrDefaultAsync(pm => pm.UserPaymentMethodId == id);
-            if (updatingPaymentMethodModel.UserId != currUser.UserId)
+            if (updatingPaymentMethodModel.UserId != currUserId.Value)
             {
                 return Unauthorized($"User has no access to update");
             }
@@ -141,18 +129,17 @@ namespace backend.Controllers
         [Route("{id:int}")]
         public async Task<IActionResult> DeletePaymentMethod([FromRoute] int id)
         {
-            var currUserEmail = GetCurrentUserEmail();
-            if (string.IsNullOrEmpty(currUserEmail))
+            if (!ModelState.IsValid)
             {
-                return Unauthorized($"User not found {currUserEmail}");
+                return BadRequest(ModelState);
             }
-            var currUser = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == currUserEmail);
-            if (currUser == null)
+            var currUserId = await _userHelper.GetCurrentUserIdAsync(HttpContext);
+            if (currUserId == null)
             {
-                return NotFound($"User details not found {currUserEmail}");
+                return Unauthorized("User not found.");
             }
             var deletingPaymentMethodModel = await _context.UserPaymentMethods.FirstOrDefaultAsync(pm => pm.UserPaymentMethodId == id);
-            if (deletingPaymentMethodModel.UserId != currUser.UserId)
+            if (deletingPaymentMethodModel.UserId != currUserId.Value)
             {
                 return Unauthorized($"User has no access to delete");
             }

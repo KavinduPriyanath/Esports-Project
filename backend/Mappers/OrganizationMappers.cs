@@ -45,5 +45,30 @@ namespace backend.Mappers
                 Country = organizationDto.Country,
             };
         }
+
+        public static OrganizationJoinRequestDto ToOrganizationJoinRequestDto(this OrganizationJoinRequest organizationJoinRequest)
+        {
+            return new OrganizationJoinRequestDto
+            {
+                OrganizationId = organizationJoinRequest.OrganizationId,
+                UserId = organizationJoinRequest.UserId,
+                RequestedTime = organizationJoinRequest.RequestedTime,
+                ApprovedAdminId = organizationJoinRequest.ApprovedAdminId,
+                ApprovedTime = organizationJoinRequest.ApprovedTime,
+                RequestStatus = organizationJoinRequest.RequestStatus
+            };
+        }
+
+        public static OrganizationMemberDto ToOrganizationMemberDto(this OrganizationMember organizationMember)
+        {
+            return new OrganizationMemberDto
+            {
+                OrganizationId = organizationMember.OrganizationId,
+                UserId = organizationMember.UserId,
+                JoinDate = organizationMember.JoinDate,
+                MemberStatus = organizationMember.MemberStatus,
+                LeftDate = organizationMember.LeftDate
+            };
+        }
     }
 }

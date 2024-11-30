@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.Helpers;
 using backend.Interfaces;
 using backend.Models;
 using backend.Repository;
@@ -117,6 +118,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
 builder.Services.AddScoped<IGameRepository, GameRepository>();
+builder.Services.AddScoped<UserHelper>();
 
 var app = builder.Build();
 

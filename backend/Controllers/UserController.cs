@@ -10,6 +10,7 @@ using backend.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using backend.Helpers;
 
 namespace backend.Controllers
 {
@@ -21,16 +22,13 @@ namespace backend.Controllers
         private readonly ApplicationDBContext _context;
         private readonly IUserRepository _userRepo;
         private readonly IPaymentMethodRepository _paymentMethodRepo;
-        public UserController(ApplicationDBContext context, IUserRepository userRepo, IPaymentMethodRepository paymentMethodRepo)
+        private readonly UserHelper _userHelper;
+        public UserController(ApplicationDBContext context, IUserRepository userRepo, IPaymentMethodRepository paymentMethodRepo, UserHelper userHelper)
         {
             _userRepo = userRepo;
             _context = context;
             _paymentMethodRepo = paymentMethodRepo;
-        }
-
-        private string GetCurrentUserEmail()
-        {
-            return User.FindFirstValue(ClaimTypes.Email); // Assuming the ID is stored in this claim
+            _userHelper = userHelper;
         }
 
         [HttpGet]
@@ -92,21 +90,16 @@ namespace backend.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var currUserEmail = GetCurrentUserEmail();
-            if (string.IsNullOrEmpty(currUserEmail))
+            var currUserId = await _userHelper.GetCurrentUserIdAsync(HttpContext);
+            if (currUserId == null)
             {
-                return Unauthorized($"User not found {currUserEmail}");
+                return Unauthorized("User not found.");
             }
-            var currUser = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == currUserEmail);
-            if (currUser == null)
+            if (currUserId.Value != userDto.UserId)
             {
-                return NotFound($"User details not found {currUserEmail}");
+                return Unauthorized($"User does not match");
             }
-            if (currUser.UserId != userDto.UserId)
-            {
-                return Unauthorized($"User does not match {currUserEmail}");
-            }
-            var userModel = await _userRepo.UpdateAsync(currUser.UserId, userDto);
+            var userModel = await _userRepo.UpdateAsync(currUserId.Value, userDto);
             if (userModel == null)
             {
                 return NotFound();
@@ -118,17 +111,16 @@ namespace backend.Controllers
         // [Route("{id:int}")]
         public async Task<IActionResult> DeleteUser()
         {
-            var currUserEmail = GetCurrentUserEmail();
-            if (string.IsNullOrEmpty(currUserEmail))
+            if (!ModelState.IsValid)
             {
-                return Unauthorized($"User not found {currUserEmail}");
+                return BadRequest(ModelState);
             }
-            var currUser = await _context.Users.FirstOrDefaultAsync(u => u.UserEmail == currUserEmail);
-            if (currUser == null)
+            var currUserId = await _userHelper.GetCurrentUserIdAsync(HttpContext);
+            if (currUserId == null)
             {
-                return NotFound($"User details not found {currUserEmail}");
+                return Unauthorized("User not found.");
             }
-            var userModel = await _userRepo.DeleteAsync(currUser.UserId);
+            var userModel = await _userRepo.DeleteAsync(currUserId.Value);
             if (userModel == null)
             {
                 return NotFound();
