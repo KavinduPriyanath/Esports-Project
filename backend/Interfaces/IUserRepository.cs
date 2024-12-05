@@ -14,6 +14,9 @@ namespace backend.Interfaces
         Task<User> CreateAsync(User user);
         Task<User> UpdateAsync(int id, UpdateUserDto updateUserDto);
         Task<User> DeleteAsync(int id);
+        Task<User> DeactiveAsync(int id);
+        Task<User> SuspendAsync(int id);
+        Task<User> ReactivateAsync(int id);
         Task<bool> IsUserExist(int id);
     }
 }

@@ -14,6 +14,7 @@ namespace backend.Mappers
         {
             return new UserDto
             {
+                UserId = user.UserId,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 UserName = user.UserName,
@@ -27,6 +28,7 @@ namespace backend.Mappers
         {
             return new UserWithPaymentDto
             {
+                UserId = user.UserId,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 UserName = user.UserName,

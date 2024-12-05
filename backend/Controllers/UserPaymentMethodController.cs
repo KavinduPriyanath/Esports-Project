@@ -1,30 +1,37 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using backend.Data;
 using backend.Dtos.PaymentMethod;
 using backend.Interfaces;
 using backend.Mappers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using backend.Helpers;
 
 namespace backend.Controllers
 {
     [Route("backend/paymentmethod")]
     [ApiController]
+    [Authorize]
     public class UserPaymentMethodController : ControllerBase
     {
         private readonly ApplicationDBContext _context;
         private readonly IPaymentMethodRepository _paymentMethodRepo;
         private readonly IUserRepository _userRepo;
-        public UserPaymentMethodController(ApplicationDBContext context, IPaymentMethodRepository paymentMethodRepo, IUserRepository userRepo)
+        private readonly UserHelper _userHelper;
+        public UserPaymentMethodController(ApplicationDBContext context, IPaymentMethodRepository paymentMethodRepo, IUserRepository userRepo, UserHelper userHelper)
         {
             _paymentMethodRepo = paymentMethodRepo;
             _context = context;
             _userRepo = userRepo;
+            _userHelper = userHelper;
         }
 
+        // Get all payment methods
         [HttpGet]
         public async Task<IActionResult> GetAllPaymentMethods()
         {
@@ -33,6 +40,7 @@ namespace backend.Controllers
             return Ok(allPaymentMethodsDto);
         }
 
+        // Get selectedpayment method details
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetPaymentMethodById([FromRoute] int id)
         {
@@ -47,6 +55,7 @@ namespace backend.Controllers
             }
         }
 
+        // Get all payment methods of selected user
         [HttpGet("user/{userId:int}")]
         public async Task<IActionResult> GetPaymentMethodsByUserId([FromRoute] int userId)
         {
@@ -61,29 +70,58 @@ namespace backend.Controllers
             }
         }
 
-        [HttpPost("{uid:int}")]
-        public async Task<IActionResult> CreatePaymentMethod([FromRoute] int uid, [FromBody] CreatePaymentMethodDto paymentMethodDto)
+        // [HttpPost("{uid:int}")]
+        // public async Task<IActionResult> CreatePaymentMethod([FromRoute] int uid, [FromBody] CreatePaymentMethodDto paymentMethodDto)
+        // {
+        //     if (!ModelState.IsValid)
+        //     {
+        //         return BadRequest(ModelState);
+        //     }
+        //     if (!await _userRepo.IsUserExist(uid))
+        //     {
+        //         return BadRequest("User does not exists");
+        //     }
+        //     var paymentMethodModel = paymentMethodDto.ToUserPaymentMethodFromCreateDto(uid);
+        //     await _paymentMethodRepo.CreateAsync(paymentMethodModel);
+        //     return CreatedAtAction(nameof(GetPaymentMethodById), new { id = paymentMethodModel.UserPaymentMethodId }, paymentMethodModel.ToPaymentMethodDto());
+        // }
+
+        // Create a new payment method - user is only allowed to create payment methods for himself
+        [HttpPost]
+        public async Task<IActionResult> CreatePaymentMethod([FromBody] CreatePaymentMethodDto paymentMethodDto)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            if (!await _userRepo.IsUserExist(uid))
+            var currUserId = await _userHelper.GetCurrentUserIdAsync(HttpContext);
+            if (currUserId == null)
             {
-                return BadRequest("User does not exists");
+                return Unauthorized("User not found.");
             }
-            var paymentMethodModel = paymentMethodDto.ToUserPaymentMethodFromCreateDto(uid);
+            var paymentMethodModel = paymentMethodDto.ToUserPaymentMethodFromCreateDto(currUserId.Value);
             await _paymentMethodRepo.CreateAsync(paymentMethodModel);
             return CreatedAtAction(nameof(GetPaymentMethodById), new { id = paymentMethodModel.UserPaymentMethodId }, paymentMethodModel.ToPaymentMethodDto());
         }
 
+        // Update payment method - user is only allowed to update payment methods of himself
         [HttpPut]
         [Route("{id:int}")]
         public async Task<IActionResult> UpdatePaymentMethod([FromRoute] int id, [FromBody] UpdatePaymentMethodDto paymentMethodDto)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+            var currUserId = await _userHelper.GetCurrentUserIdAsync(HttpContext);
+            if (currUserId == null)
+            {
+                return Unauthorized("User not found.");
+            }
+            var updatingPaymentMethodModel = await _context.UserPaymentMethods.FirstOrDefaultAsync(pm => pm.UserPaymentMethodId == id);
+            if (updatingPaymentMethodModel.UserId != currUserId.Value)
+            {
+                return Unauthorized($"User has no access to update");
             }
             var paymentMethodModel = await _paymentMethodRepo.UpdateAsync(id, paymentMethodDto);
             if (paymentMethodModel == null)
@@ -93,10 +131,25 @@ namespace backend.Controllers
             return Ok(paymentMethodModel.ToPaymentMethodDto());
         }
 
+        // Update payment method - user is only allowed to delete payment methods of himself. State will be changed. Record will not be deleted permenently. 
         [HttpDelete]
         [Route("{id:int}")]
         public async Task<IActionResult> DeletePaymentMethod([FromRoute] int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var currUserId = await _userHelper.GetCurrentUserIdAsync(HttpContext);
+            if (currUserId == null)
+            {
+                return Unauthorized("User not found.");
+            }
+            var deletingPaymentMethodModel = await _context.UserPaymentMethods.FirstOrDefaultAsync(pm => pm.UserPaymentMethodId == id);
+            if (deletingPaymentMethodModel.UserId != currUserId.Value)
+            {
+                return Unauthorized($"User has no access to delete");
+            }
             var paymentMethodModel = await _paymentMethodRepo.DeleteAsync(id);
             if (paymentMethodModel == null)
             {
